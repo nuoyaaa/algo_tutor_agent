@@ -7,19 +7,25 @@ index = faiss.read_index("vector_store/index.faiss")
 with open("vector_store/docs.pkl", "rb") as f:
     docs = pickle.load(f)
 
+
 def retrieve(query, top_k=3, dedup_threshold=0.9):
     q_emb = get_embedding([query])
     scores, indices = index.search(q_emb, top_k * 3)
 
     candidates = [
-    {
-        "text": docs[i]["text"],
-        "source": docs[i]["source"],
-        "retrieval_score": float(score)
-    }
-    for i, score in zip(indices[0], scores[0])
-    if 0 <= i < len(docs)
+        {
+            "text": docs[i]["text"],
+            "source": docs[i]["source"],
+            "url": docs[i].get("url"),
+            "topic": docs[i].get("topic"),
+            "category": docs[i].get("category"),
+            "ai_reason": docs[i].get("ai_reason"),
+            "retrieval_score": float(score)
+        }
+        for i, score in zip(indices[0], scores[0])
+        if 0 <= i < len(docs)
     ]
+
     if not candidates:
         return []
 

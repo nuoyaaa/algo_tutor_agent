@@ -5,6 +5,7 @@ client = OpenAI()
 
 MODEL_NAME = "gpt-4.1-mini"
 
+
 def ask(query):
     contexts = retrieve(query, top_k=3)
 
@@ -14,6 +15,7 @@ def ask(query):
     context_text = "\n\n".join(
         [
             f"来源：{item['source']}\n"
+            f"原始链接：{item.get('url', '无')}\n"
             f"retrieval_score：{item['retrieval_score']:.4f}\n"
             f"rerank_score：{item['rerank_score']}\n"
             f"内容：{item['text']}"
@@ -33,7 +35,7 @@ def ask(query):
 
 请输出：
 1. 简洁清晰的回答
-2. 最后列出你参考了哪些来源
+2. 不要自行编造或补充资料来源，来源会由系统统一附在回答后面
 """
 
     response = client.responses.create(
@@ -41,4 +43,19 @@ def ask(query):
         input=prompt,
     )
 
-    return response.output_text
+    answer = response.output_text
+
+    sources = []
+    used = set()
+    for item in contexts:
+        key = (item["source"], item.get("url"))
+        if key in used:
+            continue
+        used.add(key)
+        sources.append(
+            f"- {item['source']} | URL: {item.get('url', '无')}"
+        )
+
+    source_text = "\n".join(sources)
+
+    return f"{answer}\n\n参考来源：\n{source_text}"
