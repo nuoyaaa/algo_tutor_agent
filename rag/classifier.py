@@ -17,14 +17,17 @@ def classify_query(query: str):
 2. path
 表示用户想获取某个知识点的学习路径、学习顺序、学习建议、怎么学、先学什么后学什么等
 
-如果属于 path，请尽量提取出用户想学习的 topic。
+3. next_topic
+表示用户想知道“学完当前知识点以后下一步学什么”“推荐继续学习什么子主题”“后续推荐知识点”
+
+如果属于 path 或 next_topic，请尽量提取出用户当前关注的 topic。
 如果属于 qa，则 topic 可以为 null。
 
 用户输入：
 {query}
 
 请严格输出 JSON，字段如下：
-- intent: 只能是 "qa" 或 "path"
+- intent: 只能是 "qa"、"path" 或 "next_topic"
 - topic: 字符串或 null
 """
 
@@ -40,7 +43,7 @@ def classify_query(query: str):
                     "properties": {
                         "intent": {
                             "type": "string",
-                            "enum": ["qa", "path"]
+                            "enum": ["qa", "path", "next_topic"]
                         },
                         "topic": {
                             "type": ["string", "null"]
@@ -63,7 +66,9 @@ if __name__ == "__main__":
         "我想系统学动态规划",
         "给我一个动态规划学习路线",
         "动态规划和贪心有什么区别",
-        "完全背包问题怎么学"
+        "完全背包问题怎么学",
+        "动态规划学完以后学什么",
+        "推荐下一个知识点 动态规划"
     ]
 
     for q in test_queries:

@@ -2,6 +2,8 @@ from rag.qa import ask
 from rag.pathway import recommend_path, get_children
 from rag.classifier import classify_query
 from rag.topic_matcher import match_topic
+from rag.next_topic import recommend_next_topics
+from rag.next_topic_reason import generate_next_topic_reasons
 
 
 def print_learning_path(topic: str):
@@ -47,6 +49,36 @@ def print_learning_path(topic: str):
     print()
 
 
+def print_next_topics(topic: str):
+    results = recommend_next_topics(topic)
+
+    if results is None:
+        print(f"\n未找到知识点「{topic}」，无法推荐下一个知识点。\n")
+        return
+
+    print(f"\n当前知识点：{topic}")
+    print("推荐继续学习：")
+
+    if not results:
+        print("- 当前没有更细的子主题可推荐。")
+        print()
+        return
+
+    candidate_topics = [item["topic"] for item in results]
+    reason_result = generate_next_topic_reasons(topic, candidate_topics)
+
+    reason_map = {}
+    for item in reason_result.get("reasons", []):
+        reason_map[item["topic"]] = item["reason"]
+
+    for i, item in enumerate(results, start=1):
+        topic_name = item["topic"]
+        reason = reason_map.get(topic_name, "适合继续深入学习该方向。")
+        print(f"{i}. {topic_name}：{reason}")
+
+    print()
+
+
 if __name__ == "__main__":
     while True:
         query = input("请输入问题：").strip()
@@ -57,18 +89,21 @@ if __name__ == "__main__":
 
         result = classify_query(query)
 
-        if result["intent"] == "path":
+        if result["intent"] in {"path", "next_topic"}:
             topic = result["topic"]
 
             if not topic:
-                print("\n我识别到你想获取学习路径，但没有明确识别出知识点。\n")
+                print("\n我识别到你在询问学习相关内容，但没有明确识别出知识点。\n")
                 continue
 
             matched_topic = match_topic(topic)
             if matched_topic is not None:
                 topic = matched_topic
 
-            print_learning_path(topic)
+            if result["intent"] == "path":
+                print_learning_path(topic)
+            else:
+                print_next_topics(topic)
 
         else:
             answer = ask(query)
